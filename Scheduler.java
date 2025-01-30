@@ -19,10 +19,19 @@ class Scheduler {
     public synchronized void addEvent(Event event) {
         eventQueue.add(event);
         System.out.println("[Scheduler] Received event: " + event);
+        notifyAll();
         assignEventToDrone(); // Try to assign an event immediately
     }
 
     private void assignEventToDrone() {
+        while(eventQueue.isEmpty() || !hasAvailableDrone()){
+            try {
+                System.out.println("[Scheduler] No available drones or events. Waiting...");
+                wait();
+            }catch (InterruptedException e){
+                Thread.currentThread().interrupt();
+            }
+        }
         for (DroneSubsystem drone : drones) {
             if (drone.isAvailable() && !eventQueue.isEmpty()) {
                 Event nextEvent = eventQueue.poll();  // Get the highest-severity available event
@@ -44,5 +53,9 @@ class Scheduler {
             case "LOW" -> 3;
             default -> 4;
         };
+    }
+
+    public boolean hasAvailableDrone() {
+        return drones.stream().anyMatch(DroneSubsystem::isAvailable);
     }
 }
