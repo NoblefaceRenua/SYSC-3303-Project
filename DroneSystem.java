@@ -11,6 +11,7 @@ public class DroneSystem implements Runnable{
     private boolean nozzle;
     private String status;
     private int distance_from_fire;
+
     public DroneSystem(Scheduler scheduler, int id){
         travel_seconds_spent = 0;
         stuck = false;
@@ -19,6 +20,8 @@ public class DroneSystem implements Runnable{
         pour_time = 0;
         // refill method will be in the scheduler class
     }
+
+
 
     /**
      *
