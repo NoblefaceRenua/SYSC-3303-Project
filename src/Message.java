@@ -1,5 +1,5 @@
 public class Message {
-    private String timestamp;
+    private int timestamp;
     private int zoneID;
     private String eventType;
 
@@ -15,7 +15,7 @@ public class Message {
      * @param severity The severity level of the fire (Low, Moderate, High).
      */
 
-    public Message(String timestamp,int zoneID, String eventType,String severity){
+    public Message(int timestamp,int zoneID, String eventType,String severity){
         this.timestamp = timestamp;
         this.zoneID = zoneID;
         this.eventType = eventType;
@@ -29,7 +29,7 @@ public class Message {
      *
      * @return The timestamp as a String.
      */
-    public String getTimestamp() {
+    public int getTimestamp() {
         return timestamp;
     }
 
@@ -59,7 +59,7 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message{" +
+        return "Event {" +
                 "timestamp='" + timestamp + '\'' +
                 ", zoneID=" + zoneID +
                 ", eventType='" + eventType + '\'' +
