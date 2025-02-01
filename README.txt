@@ -1,9 +1,11 @@
 Files:
 - DroneSystem.java: Contains information about each drone, as well as the drone id to differentiate between each of them.
 - FireIncidentSubsystem.java: Used to read fire incidents from a file and send them to the scheduler class
-- Message.java: Contains information about each fire incident, constructed from a specific incident from the csv files. Sent from the FireIncidentSubsytem to the Scheduler, which assigns each message to an idle drone
+- Message.java: Contains information about each fire incident, constructed from a specific incident from the csv files. Sent from the Fire Incident Subsystem to the Scheduler, which assigns each message to an idle drone
 - Scheduler.java: Used to handle various fire incidents and assign them to different drones. 
 - Zone.java: Indicates the zone at which a fire incident occurs.
+- Sample_event_file.csv: Contains different sample events for testing purposes
+- sample_zone_file.csv: Contains the zones and their parameters
 
 
 
