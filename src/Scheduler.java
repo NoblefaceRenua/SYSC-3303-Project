@@ -90,6 +90,15 @@ class Scheduler {
         return drones.stream().allMatch(drone -> !drone.isAvailable());
     }
 
+    /**
+     * Checks if all drones are currently occupied.
+     *
+     * @return priority queue of the scheduler.
+     */
+    public PriorityQueue<Message> getEventQueue() {
+        return eventQueue;
+    }
+
 
     /**
      * Determines the priority of an event based on its severity level.
