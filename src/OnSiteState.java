@@ -4,7 +4,8 @@ public class OnSiteState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
-
+        drone.pour();
+        drone.setState("Not Ready");
     }
 
     /**

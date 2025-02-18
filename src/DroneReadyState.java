@@ -4,9 +4,9 @@ public class DroneReadyState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
-        drone.setState("Ready");
+
 //        drone.assignEvent(); // get message from scheduler
-        drone.run(); //
+
     }
 
     /**

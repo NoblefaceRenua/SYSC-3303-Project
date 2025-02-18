@@ -18,7 +18,7 @@ class DroneSystem implements Runnable{
     private Message currentEvent = null;
     private Scheduler scheduler;
     private HashMap<String, DroneState> states;
-    private DroneState currentState = new NotReadyState();
+    private DroneState currentState;
 
     public DroneSystem(Scheduler scheduler, int id){
         travel_seconds_spent = 0;
@@ -29,10 +29,16 @@ class DroneSystem implements Runnable{
         this.currStatus = droneStatus.EMPTY;
         this.scheduler = scheduler;
         states = new HashMap<>();
+        addState("Not Ready", new NotReadyState());
+        addState("Ready", new DroneReadyState());
+        addState("Flying", new FlyingState());
+        addState("On Site", new OnSiteState());
+        addState("Stuck", new DroneStuckState());
+        currentState = states.get("Not Ready");
     }
     
     public void setState(String state){
-        currentState = states.get(state);
+        this.currentState = states.get(state);
     }
 
     public void addState(String state, DroneState newState){
@@ -59,7 +65,7 @@ class DroneSystem implements Runnable{
             synchronized (this) {
                 if (!stuck && !empty){
                     // set state to ready
-                    currentState = new DroneReadyState();
+                    setState("Ready");
                 }
                 while (currentEvent == null) {
                     try {
@@ -81,6 +87,7 @@ class DroneSystem implements Runnable{
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+            setState("On Site");
 
             // Event processing done
             synchronized (this) {
@@ -104,12 +111,12 @@ class DroneSystem implements Runnable{
 
     public void fly(){
         try {
-            Thread.sleep(3000);  // Simulate processing time
+            Thread.sleep(1500);  // Simulate flight time
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
         // change the state to flying
-        currentState = new FlyingState();
+        currentState = states.get("Flying");
     }
 
     public void simulateStuck(){
@@ -117,30 +124,29 @@ class DroneSystem implements Runnable{
         stuck = rand.nextBoolean();
 
         // change the state to stuck
-        currentState = new DroneStuckState();
     }
 
     public void pour(){
         // change state to onSite
-        currentState = new OnSiteState();
+//        currentState = states.get("On Site");
 
         // quench the fire
         nozzle = true;
         while(agent_level_sensor != 0 && nozzle){
             pour_time++;
             agent_level_sensor--; // pour the water on the fires
-            status = "Dousing flames....";
+//            status = "Dousing flames....";
             if (agent_level_sensor == 0){
                 empty = true;
             }
         }
-        status = "Fire cleared & returning to base....";
+        status = "Drone: Fire cleared & returning to base....";
         travel_seconds_spent = 0; // reset the seconds
         arrival_sensor = false;
         nozzle = false; // close the nozzle
 
         // change the state to notReady
-        currentState = new NotReadyState();
+//        currentState = states.get("Not Ready");
     }
 
 
