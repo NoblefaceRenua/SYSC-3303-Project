@@ -1,3 +1,4 @@
+import java.util.HashMap;
 import java.util.Random;
 
 class DroneSystem implements Runnable{
@@ -9,12 +10,15 @@ class DroneSystem implements Runnable{
     private int SPEED = 40; // the speed of the drone while flying over to the incident fire zone in m/s
     private int Id; // the ID of the drone
     private boolean nozzle;
+    private boolean empty = false;
     private String status;
     private int distance_from_fire;
     private enum droneStatus {EMPTY, FULL};
     private droneStatus currStatus;
     private Message currentEvent = null;
     private Scheduler scheduler;
+    private HashMap<String, DroneState> states;
+    private DroneState currentState = new NotReadyState();
 
     public DroneSystem(Scheduler scheduler, int id){
         travel_seconds_spent = 0;
@@ -24,6 +28,15 @@ class DroneSystem implements Runnable{
         pour_time = 0;
         this.currStatus = droneStatus.EMPTY;
         this.scheduler = scheduler;
+        states = new HashMap<>();
+    }
+    
+    public void setState(String state){
+        currentState = states.get(state);
+    }
+
+    public void addState(String state, DroneState newState){
+        states.put(state, newState);
     }
 
     public synchronized boolean isAvailable() {
@@ -44,6 +57,10 @@ class DroneSystem implements Runnable{
     public void run() {
         while (true) {
             synchronized (this) {
+                if (!stuck && !empty){
+                    // set state to ready
+                    currentState = new DroneReadyState();
+                }
                 while (currentEvent == null) {
                     try {
                         wait();  // Wait until assigned an event
@@ -55,6 +72,10 @@ class DroneSystem implements Runnable{
 
             // Simulate event processing
             System.out.println("[Drone] Processing event: " + currentEvent);
+            // fly to the destination
+            fly();
+
+            // quench the fire
             try {
                 Thread.sleep(3000);  // Simulate processing time
             } catch (InterruptedException e) {
@@ -81,43 +102,46 @@ class DroneSystem implements Runnable{
 
     }
 
-//    public void setDestination(int distance_from_fire){
-//        this.distance_from_fire = distance_from_fire;
-//    }
-//
-//    public boolean fly(int destination){
-//        int distance_travelled = 0;
-//
-//        Random rand = new Random();
-//
-//
-//        while (!arrival_sensor){
-//            if(distance_travelled == destination){
-//                arrival_sensor = true;
-//                status = "Arrived at fire....";
-//            }
-//            status = "Flying....";
-//            stuck = rand.nextBoolean(); // to randomly determine if the drone is stuck
-//            if(stuck){
-//                status = "Stuck....";
-//            }
-//            travel_seconds_spent++;
-//            distance_travelled = SPEED * travel_seconds_spent;
-//        }
-//
-//        return true;
-//    }
-//
-//    public void pour(){
-//        nozzle = true;
-//        while(agent_level_sensor != 0 && nozzle){
-//            pour_time++;
-//            agent_level_sensor--; // pour the water on the fires
-//            status = "Dousing flames....";
-//        }
-//        status = "Fire cleared & returning to base....";
-//        travel_seconds_spent = 0; // reset the seconds
-//        arrival_sensor = false;
-//        nozzle = false; // close the nozzle
-//    }
+    public void fly(){
+        try {
+            Thread.sleep(3000);  // Simulate processing time
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        // change the state to flying
+        currentState = new FlyingState();
+    }
+
+    public void simulateStuck(){
+        Random rand = new Random();
+        stuck = rand.nextBoolean();
+
+        // change the state to stuck
+        currentState = new DroneStuckState();
+    }
+
+    public void pour(){
+        // change state to onSite
+        currentState = new OnSiteState();
+
+        // quench the fire
+        nozzle = true;
+        while(agent_level_sensor != 0 && nozzle){
+            pour_time++;
+            agent_level_sensor--; // pour the water on the fires
+            status = "Dousing flames....";
+            if (agent_level_sensor == 0){
+                empty = true;
+            }
+        }
+        status = "Fire cleared & returning to base....";
+        travel_seconds_spent = 0; // reset the seconds
+        arrival_sensor = false;
+        nozzle = false; // close the nozzle
+
+        // change the state to notReady
+        currentState = new NotReadyState();
+    }
+
+
 }
