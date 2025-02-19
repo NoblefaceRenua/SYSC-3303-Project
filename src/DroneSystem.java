@@ -13,12 +13,18 @@ class DroneSystem implements Runnable{
     private boolean empty = false;
     private String status;
     private int distance_from_fire;
-    private enum droneStatus {EMPTY, FULL};
+    private enum droneStatus {EMPTY, FULL, CRASH};
     private droneStatus currStatus;
     private Message currentEvent = null;
     private Scheduler scheduler;
     private HashMap<String, DroneState> states;
     private DroneState currentState;
+
+    private static final String RESET = "\u001B[0m";
+    private static final String RED = "\u001B[31m";
+    private static final String GREEN = "\u001B[32m";
+    private static final String YELLOW = "\u001B[33m";
+
 
     public DroneSystem(Scheduler scheduler, int id){
         travel_seconds_spent = 0;
@@ -36,7 +42,7 @@ class DroneSystem implements Runnable{
         addState("Stuck", new DroneStuckState());
         currentState = states.get("Not Ready");
     }
-    
+
     public void setState(String state){
         this.currentState = states.get(state);
     }
@@ -77,36 +83,59 @@ class DroneSystem implements Runnable{
             }
 
             // Simulate event processing
-            System.out.println("[Drone] Processing event: " + currentEvent);
-            // fly to the destination
-            fly();
-
-            // quench the fire
-            try {
-                Thread.sleep(3000);  // Simulate processing time
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            setState("On Site");
-
-            // Event processing done
-            synchronized (this) {
-                currentEvent = null;
-                currStatus = droneStatus.EMPTY;
-                System.out.println("[Drone] Finished event, ready for new assignment.");
+            switch(currentEvent.getEventType().toUpperCase()){
+                case "DRONE_CRASH":
+                    System.out.println(RED + "[Drone] Processing event: " + currentEvent + RESET);
+                    makeUnavailable();
+                    break;
+                case "DRONE_REQUEST":
+                    System.out.println(YELLOW+ "[Drone] Processing event: " + currentEvent + RESET);
+                    break;
+                default:
+                    System.out.println("[Drone] Processing event: " + currentEvent);
             }
 
-            synchronized (scheduler) {
-                scheduler.notifyAll();  // Notify scheduler that a drone is available
-            }
-        }
+            if (currStatus != droneStatus.CRASH){
+                // fly to the destination
+                fly();
 
-        // the drone should fly to the destination and douse the fire, if it is not stuck
+                // quench the fire
+                try {
+                    Thread.sleep(3000);  // Simulate processing time
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                setState("On Site");
+
+                // Event processing done
+                synchronized (this) {
+                    currentEvent = null;
+                    currStatus = droneStatus.EMPTY;
+                    System.out.println(GREEN + "[Drone] Finished event, ready for new assignment." + RESET);
+                }
+
+                synchronized (scheduler) {
+                    scheduler.notifyAll();  // Notify scheduler that a drone is available
+                }
+
+                // the drone should fly to the destination and douse the fire, if it is not stuck
 //        if(!stuck){
 //            fly(distance_from_fire);
 //            pour();
 //        }
+            } else {
+                System.out.println(RED + "[Drone] CRASHED, Cannot perform more task." + RESET);
+                break;
+            }
 
+
+            }
+
+
+    }
+
+    public void makeUnavailable(){
+        currStatus = droneStatus.CRASH;
     }
 
     public void fly(){
