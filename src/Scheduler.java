@@ -40,6 +40,15 @@ class Scheduler {
         drones.add(drone);
     }
 
+    /**
+     * Return drone in the scheduler's list of drones.
+     *
+     * @return list of the drones in the scheduler
+     */
+    public List<DroneSystem> getDroneList(){
+        return drones;
+    }
+
 
     /**
      * Adds an event to the priority queue and attempts to assign it to an available drone.
@@ -48,6 +57,14 @@ class Scheduler {
      * @param event The fire incident message to be added to the queue.
      */
     public synchronized void addEvent(Message event) {
+        while (drones.isEmpty()){
+            try{
+                System.out.println("No Drone Added");
+                wait();
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
         eventQueue.add(event);
         System.out.println(" ");
         System.out.println("[Scheduler] Received event: " + event);

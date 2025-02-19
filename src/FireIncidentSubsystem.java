@@ -131,7 +131,7 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
-    private long convertTime(String time) {
+    public long convertTime(String time) {
         String[] parts = time.split(":");
         int i = (Integer.parseInt(parts[0]) * 3600 +
                 Integer.parseInt(parts[1]) * 60 +
