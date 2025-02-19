@@ -60,7 +60,7 @@ public class Message {
     @Override
     public String toString() {
         return "Event {" +
-                "timestamp='" + timestamp + '\'' +
+                "timestamp='" + timestamp + 's' + '\'' +
                 ", zoneID=" + zoneID +
                 ", eventType='" + eventType + '\'' +
                 ", severity='" + severity + '\'' +
