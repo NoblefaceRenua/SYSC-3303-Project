@@ -11,7 +11,7 @@ class DroneSystem implements Runnable{
     private int Id; // the ID of the drone
     private boolean nozzle;
     private boolean empty = false;
-    private enum droneStatus {EMPTY, FULL, CRASH};
+    private enum droneStatus {EMPTY, FULL, CRASH, ARRIVED};
     private droneStatus currStatus;
     private Message currentEvent = null;
     private Scheduler scheduler;
@@ -109,6 +109,7 @@ class DroneSystem implements Runnable{
                     System.out.println("[Drone] Processing event: " + currentEvent);
             }
 
+            // case where the drone does not crash
             if (currStatus != droneStatus.CRASH){
                 // fly to the destination
                 setState("Flying");
@@ -119,7 +120,9 @@ class DroneSystem implements Runnable{
 //                } catch (InterruptedException e) {
 //                    Thread.currentThread().interrupt();
 //                }
+
                 setState("On Site");
+
 
                 // Event processing done
                 synchronized (this) {
@@ -180,14 +183,15 @@ class DroneSystem implements Runnable{
         }
         // change the state to flying
 //        currentState = states.get("Flying");
+
     }
 
-    public void simulateStuck(){
-        Random rand = new Random();
-        stuck = rand.nextBoolean();
-
-        // change the state to stuck
-    }
+//    public void simulateStuck(){
+//        Random rand = new Random();
+//        stuck = rand.nextBoolean();
+//
+//        // change the state to stuck
+//    }
 
     public void pour(){
         // change state to onSite
