@@ -4,7 +4,7 @@ public class DroneStuckState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
-
+        // notify scheduler
     }
 
     /**
@@ -12,22 +12,6 @@ public class DroneStuckState implements DroneState{
      */
     @Override
     public void displayState() {
-
-    }
-
-    /**
-     * @param drone
-     */
-    @Override
-    public void handleDroneStuck(DroneSystem drone) {
-
-    }
-
-    /**
-     * @param drone
-     */
-    @Override
-    public void handleEmpty(DroneSystem drone) {
 
     }
 }

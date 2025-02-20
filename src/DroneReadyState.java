@@ -4,6 +4,7 @@ public class DroneReadyState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
+        drone.receiveEvent();
 
 //        drone.assignEvent(); // get message from scheduler
 
@@ -21,21 +22,5 @@ public class DroneReadyState implements DroneState{
 //            empty = false;
 //        }
 //        System.out.println("Drone awaiting assignment");
-    }
-
-    /**
-     * @param drone
-     */
-    @Override
-    public void handleDroneStuck(DroneSystem drone) {
-
-    }
-
-    /**
-     * @param drone
-     */
-    @Override
-    public void handleEmpty(DroneSystem drone) {
-
     }
 }
