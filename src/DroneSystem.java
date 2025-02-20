@@ -72,6 +72,19 @@ class DroneSystem implements Runnable{
             }
         }
 
+        // Simulate event processing
+        switch(currentEvent.getEventType().toUpperCase()){
+            case "DRONE_CRASH":
+                System.out.println(RED + "[Drone] Processing event: " + currentEvent + RESET);
+                makeUnavailable();
+                break;
+            case "DRONE_REQUEST":
+                System.out.println(YELLOW+ "[Drone] Processing event: " + currentEvent + RESET);
+                break;
+            default:
+                System.out.println("[Drone] Processing event: " + currentEvent);
+        }
+
     }
 
     /**
@@ -96,18 +109,18 @@ class DroneSystem implements Runnable{
             setState("Ready");
 
 
-            // Simulate event processing
-            switch(currentEvent.getEventType().toUpperCase()){
-                case "DRONE_CRASH":
-                    System.out.println(RED + "[Drone] Processing event: " + currentEvent + RESET);
-                    makeUnavailable();
-                    break;
-                case "DRONE_REQUEST":
-                    System.out.println(YELLOW+ "[Drone] Processing event: " + currentEvent + RESET);
-                    break;
-                default:
-                    System.out.println("[Drone] Processing event: " + currentEvent);
-            }
+//            // Simulate event processing
+//            switch(currentEvent.getEventType().toUpperCase()){
+//                case "DRONE_CRASH":
+//                    System.out.println(RED + "[Drone] Processing event: " + currentEvent + RESET);
+//                    makeUnavailable();
+//                    break;
+//                case "DRONE_REQUEST":
+//                    System.out.println(YELLOW+ "[Drone] Processing event: " + currentEvent + RESET);
+//                    break;
+//                default:
+//                    System.out.println("[Drone] Processing event: " + currentEvent);
+//            }
 
             // case where the drone does not crash
             if (currStatus != droneStatus.CRASH){

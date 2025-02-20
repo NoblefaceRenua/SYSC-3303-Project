@@ -4,8 +4,8 @@ public class DroneReadyState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
+        System.out.println("Drone: Ready");
         drone.receiveEvent();
-
 //        drone.assignEvent(); // get message from scheduler
 
     }
