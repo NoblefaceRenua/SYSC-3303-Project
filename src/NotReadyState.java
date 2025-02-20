@@ -4,7 +4,9 @@ public class NotReadyState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
-
+        System.out.println("Drone: Not Ready");
+        drone.returnToBase();
+        drone.refillTank();
     }
 
     /**
@@ -12,22 +14,6 @@ public class NotReadyState implements DroneState{
      */
     @Override
     public void displayState() {
-
-    }
-
-    /**
-     * @param drone
-     */
-    @Override
-    public void handleDroneStuck(DroneSystem drone) {
-
-    }
-
-    /**
-     * @param drone
-     */
-    @Override
-    public void handleEmpty(DroneSystem drone) {
 
     }
 }
