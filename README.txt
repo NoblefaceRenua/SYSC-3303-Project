@@ -6,8 +6,13 @@ Files:
 - Zone.java: Indicates the zone at which a fire incident occurs.
 - Sample_event_file.csv: Contains different sample events for testing purposes
 - sample_zone_file.csv: Contains the zones and their parameters
-
-
+- DroneState: Interface for the drone states
+- DroneReadyState: Drone state indicating that the drone is ready to be scheduled
+- DronestuckState: Drone state indicating that the drone has crashed or is stuck due to an error
+- OnSiteState: Drone state indicating that the drone has arrived at the fire incident zone
+- NotReadyState: Drone state indicating that the drone is not ready to be scheduled
+- FlyingState: Drone state indicating that the drone is flying to the fire incident zone
+- EmptyTankState: Drone state indicating that the drone's tank has been emptied
 
 Setup instructions:
 Navigate to the Main.java file and run this file. The output will be displayed on the terminal, indicating that the files have been loaded successfully, when each event has been received by the scheduler, as well as when each drone has been assigned an event and when each event has been completed by a drone.
