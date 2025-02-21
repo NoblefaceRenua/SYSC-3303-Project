@@ -19,7 +19,6 @@ public class FireIncidentSubsystem implements Runnable {
      *
      * @param file_Path The path to the input file containing fire incidents.
      */
-
     public FireIncidentSubsystem(Scheduler scheduler, String file_Path, String zone_path) {
         this.scheduler = scheduler;
         this.file_Path = file_Path;
@@ -125,7 +124,7 @@ public class FireIncidentSubsystem implements Runnable {
                     System.out.println("Invalid line format: " + line);
                 }
             }
-            System.out.println("[FireIncidentSubsystem] Event loaded successfully.");
+            System.out.println("[FireIncidentSubsystem] Event loaded successfully." + "\n");
         } catch (IOException e) {
             System.err.println("Error reading the fire incident file: " + e.getMessage());
         }

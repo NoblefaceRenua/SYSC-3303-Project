@@ -5,7 +5,7 @@ public class DroneStuckState implements DroneState{
     @Override
     public void handleStateChanged(DroneSystem drone) {
         // notify scheduler
-        System.out.println("Drone: Crashed");
+        System.out.println("Drone " + drone.getId()  + ": Crashed");
     }
 
     /**

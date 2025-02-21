@@ -6,8 +6,9 @@ import java.util.*;
  * The scheduler assigns events to drones that are available for dispatch.
  */
 class Scheduler {
-    private PriorityQueue<Message> eventQueue;
-    private List<DroneSystem> drones = new ArrayList<>();
+    protected PriorityQueue<Message> eventQueue;
+    protected List<DroneSystem> drones = new ArrayList<>();
+    private SchedulerState state;
 
     /**
      * Constructs a Scheduler instance.
@@ -29,6 +30,8 @@ class Scheduler {
                 return Integer.compare(m1.getTimestamp(), m2.getTimestamp());
             }
         });
+
+        this.state = new IdleState(); // Start in Idle state
     }
 
     /**
@@ -40,6 +43,10 @@ class Scheduler {
         drones.add(drone);
     }
 
+    public synchronized void setState(SchedulerState state) {
+        this.state = state;
+    }
+
     /**
      * Return drone in the scheduler's list of drones.
      *
@@ -49,61 +56,74 @@ class Scheduler {
         return drones;
     }
 
-
     /**
-     * Adds an event to the priority queue and attempts to assign it to an available drone.
-     * Notifies all waiting threads that a new event is available.
-     *
-     * @param event The fire incident message to be added to the queue.
-     */
+          * Adds an event to the priority queue and attempts to assign it to an available drone.
+          * Notifies all waiting threads that a new event is available.
+          *
+          * @param event The fire incident message to be added to the queue.
+          */
     public synchronized void addEvent(Message event) {
-        while (drones.isEmpty()){
-            try{
-                System.out.println("No Drone Added");
-                wait();
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
-        }
-        eventQueue.add(event);
-        System.out.println(" ");
-        System.out.println("[Scheduler] Received event: " + event);
-        assignEventToDrone(); // Try to assign an event immediately
-        notifyAll();
+        state.addEvent(this, event);
     }
 
-    /**
-     * Assigns an event from the queue to an available drone.
-     * If no drones are available, the thread waits until one becomes free.
-     */
-    public synchronized void assignEventToDrone() {
-        while (eventQueue.isEmpty() || allDronesFull()) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+//    public synchronized void assignEventToDrone() {
+//        state.assignEventToDrone(this);
+//    }
 
-        // Assign event to an available drone
-        for (DroneSystem drone : drones) {
-            if (drone.isAvailable()) {
-                Message event = eventQueue.poll();  // Get highest-priority event
-                if (event != null) {
-                    drone.assignEvent(event);
-                    notifyAll();  // Notify other waiting threads
-                }
-                break;
-            }
-        }
-    }
+//    /**
+//     * Adds an event to the priority queue and attempts to assign it to an available drone.
+//     * Notifies all waiting threads that a new event is available.
+//     *
+//     * @param event The fire incident message to be added to the queue.
+//     */
+//    public synchronized void addEvent(Message event) {
+//        while (drones.isEmpty()){
+//            try{
+//                System.out.println("No Drone Added");
+//                wait();
+//            } catch (InterruptedException e){
+//                e.printStackTrace();
+//            }
+//        }
+//        eventQueue.add(event);
+//        System.out.println(" ");
+//        System.out.println("[Scheduler] Received event: " + event);
+//        assignEventToDrone(); // Try to assign an event immediately
+//        notifyAll();
+//    }
+//
+//    /**
+//     * Assigns an event from the queue to an available drone.
+//     * If no drones are available, the thread waits until one becomes free.
+//     */
+//    public synchronized void assignEventToDrone() {
+//        while (eventQueue.isEmpty() || allDronesFull()) {
+//            try {
+//                wait();
+//            } catch (InterruptedException e) {
+//                Thread.currentThread().interrupt();
+//            }
+//        }
+//
+//        // Assign event to an available drone
+//        for (DroneSystem drone : drones) {
+//            if (drone.isAvailable()) {
+//                Message event = eventQueue.poll();  // Get highest-priority event
+//                if (event != null) {
+//                    drone.assignEvent(event);
+//                    notifyAll();  // Notify other waiting threads
+//                }
+//                break;
+//            }
+//        }
+//    }
 
     /**
      * Checks if all drones are currently occupied.
      *
      * @return true if all drones are busy, false otherwise.
      */
-    private boolean allDronesFull() {
+    public boolean allDronesFull() {
         return drones.stream().allMatch(drone -> !drone.isAvailable());
     }
 

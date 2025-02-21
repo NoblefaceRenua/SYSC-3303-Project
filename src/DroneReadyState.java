@@ -4,9 +4,18 @@ public class DroneReadyState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
-        System.out.println("Drone: Ready");
-        drone.receiveEvent();
-//        drone.assignEvent(); // get message from scheduler
+        System.out.println("[Drone " + drone.getId() + "] Ready and waiting for an event.");
+
+        synchronized (drone) {
+            while (drone.getCurrentEvent() == null) {  // Check if there's an event
+                try {
+                    drone.wait();  // Wait until an event is assigned
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+        drone.receiveEvent();  // Process the event after assignment
 
     }
 
