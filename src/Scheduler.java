@@ -43,6 +43,11 @@ class Scheduler {
         drones.add(drone);
     }
 
+    /**
+     * Sets the state of the scheduler.
+     *
+     * @param state of the scheduler
+     */
     public synchronized void setState(SchedulerState state) {
         this.state = state;
     }
@@ -66,57 +71,6 @@ class Scheduler {
         state.addEvent(this, event);
     }
 
-//    public synchronized void assignEventToDrone() {
-//        state.assignEventToDrone(this);
-//    }
-
-//    /**
-//     * Adds an event to the priority queue and attempts to assign it to an available drone.
-//     * Notifies all waiting threads that a new event is available.
-//     *
-//     * @param event The fire incident message to be added to the queue.
-//     */
-//    public synchronized void addEvent(Message event) {
-//        while (drones.isEmpty()){
-//            try{
-//                System.out.println("No Drone Added");
-//                wait();
-//            } catch (InterruptedException e){
-//                e.printStackTrace();
-//            }
-//        }
-//        eventQueue.add(event);
-//        System.out.println(" ");
-//        System.out.println("[Scheduler] Received event: " + event);
-//        assignEventToDrone(); // Try to assign an event immediately
-//        notifyAll();
-//    }
-//
-//    /**
-//     * Assigns an event from the queue to an available drone.
-//     * If no drones are available, the thread waits until one becomes free.
-//     */
-//    public synchronized void assignEventToDrone() {
-//        while (eventQueue.isEmpty() || allDronesFull()) {
-//            try {
-//                wait();
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//            }
-//        }
-//
-//        // Assign event to an available drone
-//        for (DroneSystem drone : drones) {
-//            if (drone.isAvailable()) {
-//                Message event = eventQueue.poll();  // Get highest-priority event
-//                if (event != null) {
-//                    drone.assignEvent(event);
-//                    notifyAll();  // Notify other waiting threads
-//                }
-//                break;
-//            }
-//        }
-//    }
 
     /**
      * Checks if all drones are currently occupied.

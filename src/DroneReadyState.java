@@ -1,6 +1,13 @@
+/**
+ * The DroneReadyState class represents a state where the drone is ready to be scheduled for an event.
+ * In this state, the drone waits for an event assignment from the scheduler.
+ */
 public class DroneReadyState implements DroneState{
     /**
-     * @param drone
+     * Handles the transition to the ready state.
+     * The drone waits until it receives an event from the scheduler.
+     *
+     * @param drone The drone instance entering the ready state.
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
@@ -20,16 +27,9 @@ public class DroneReadyState implements DroneState{
     }
 
     /**
-     *
+     * Displays the current state of the drone as "Ready".
      */
     @Override
     public void displayState() {
-//        System.out.println("Drone" + droneId + "status: Ready");
-//        if (empty) {
-//            System.out.println("Drone" + droneId + "water tank status: Empty");
-//            System.out.println("Drone: refilling...");
-//            empty = false;
-//        }
-//        System.out.println("Drone awaiting assignment");
     }
 }

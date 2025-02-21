@@ -2,8 +2,9 @@ import java.io.*;
 import java.util.*;
 
 /**
- * The FireIncidentSubsystem reads the fire incidents from a file and sends them
- * to the scheduler through a thread-safe queue.
+ * The FireIncidentSubsystem is responsible for reading fire incidents and zone data from CSV files.
+ * It processes the fire incidents and sends them to the scheduler at the correct simulated time.
+ * This subsystem runs on a separate thread to simulate real-time event dispatching.
  */
 public class FireIncidentSubsystem implements Runnable {
     private final Map<Integer, List<Message>> eventMap; // Maps timestamp → list of events
@@ -16,8 +17,9 @@ public class FireIncidentSubsystem implements Runnable {
     /**
      * Constructs the FireIncidentSubsystem.
      *
-     *
+     * @param scheduler The scheduler responsible for managing incidents and drones.
      * @param file_Path The path to the input file containing fire incidents.
+     * @param zone_path The path to the input file containing zone information.
      */
     public FireIncidentSubsystem(Scheduler scheduler, String file_Path, String zone_path) {
         this.scheduler = scheduler;
@@ -27,6 +29,11 @@ public class FireIncidentSubsystem implements Runnable {
     }
 
 
+    /**
+     * The main execution loop of the subsystem.
+     * Loads zones and fire incidents from their respective files, then simulates time passage.
+     * When the simulated time matches an event timestamp, the event is sent to the scheduler.
+     */
     @Override
     public void run() {
         loadZones();
@@ -52,7 +59,11 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
-    // Method to read the Zones CSV file
+
+    /**
+     * Reads and loads zone data from the specified CSV file.
+     * Populates the zoneMap with Zone objects.
+     */
     private void loadZones() {
         try (BufferedReader br = new BufferedReader(new FileReader(zone_path))) {
             String line;
@@ -92,7 +103,10 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
-    // Method to read the Fire Incidents CSV file
+    /**
+     * Reads and loads fire incident data from the specified CSV file.
+     * Populates the eventMap with Message objects, mapping each event to its timestamp.
+     */
     private void loadFireIncidents() {
         try (BufferedReader br = new BufferedReader(new FileReader(file_Path))) {
             br.readLine(); // Skip the first line
@@ -130,6 +144,12 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Converts a time string (HH:MM:SS) into an integer representation in seconds.
+     *
+     * @param time The time string in HH:MM:SS format.
+     * @return The converted time as an integer representing seconds.
+     */
     public long convertTime(String time) {
         String[] parts = time.split(":");
         int i = (Integer.parseInt(parts[0]) * 3600 +
@@ -138,6 +158,11 @@ public class FireIncidentSubsystem implements Runnable {
         return i; // Scale down for simulation
     }
 
+    /**
+     * Retrieves the map of zones loaded from the CSV file.
+     *
+     * @return A map containing zone IDs and their corresponding Zone objects.
+     */
     public Map<Integer, Zone> getZones() {
         return zoneMap;
     }

@@ -1,4 +1,14 @@
+/**
+ * Represents the state where the Scheduler is waiting for drones to become available.
+ * Once a drone is available, the Scheduler transitions back to ProcessingState.
+ */
 public class WaitingState implements SchedulerState {
+    /**
+     * Adds an event to the scheduler while it is waiting for available drones.
+     *
+     * @param scheduler The Scheduler instance.
+     * @param event The event to be added.
+     */
     @Override
     public void addEvent(Scheduler scheduler, Message event) {
         synchronized (scheduler) {
@@ -9,6 +19,11 @@ public class WaitingState implements SchedulerState {
         }
     }
 
+    /**
+     * Waits for a drone to become available before transitioning to ProcessingState.
+     *
+     * @param scheduler The Scheduler instance.
+     */
     @Override
     public void assignEventToDrone(Scheduler scheduler) {
         synchronized (scheduler) {
@@ -21,9 +36,9 @@ public class WaitingState implements SchedulerState {
                 }
             }
 
+            // Transition back to ProcessingState once a drone is available.
             scheduler.setState(new ProcessingState());
             scheduler.notifyAll(); // Notify that we're back in processing mode
-            //scheduler.assignEventToDrone();
         }
     }
 }

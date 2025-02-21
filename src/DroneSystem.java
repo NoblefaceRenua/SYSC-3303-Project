@@ -1,6 +1,11 @@
 import java.util.HashMap;
 import java.util.Random;
 
+/**
+ * The DroneSystem class represents a drone in the firefighting system.
+ * Each drone can process fire incident events, transition through different states,
+ * and interact with the Scheduler to receive and complete tasks.
+ */
 class DroneSystem implements Runnable{
     private int travel_seconds_spent;
     private int pour_time; // in seconds
@@ -18,12 +23,19 @@ class DroneSystem implements Runnable{
     private HashMap<String, DroneState> states;
     private DroneState currentState;
 
+    /** ANSI color codes for console output formatting. */
     private static final String RESET = "\u001B[0m";
     private static final String RED = "\u001B[31m";
     private static final String GREEN = "\u001B[32m";
     private static final String YELLOW = "\u001B[33m";
 
 
+    /**
+     * Constructs a DroneSystem instance with an assigned ID and reference to the Scheduler.
+     *
+     * @param scheduler The Scheduler responsible for assigning events to this drone.
+     * @param id The unique identifier for the drone.
+     */
     public DroneSystem(Scheduler scheduler, int id){
         travel_seconds_spent = 0;
         stuck = false;
@@ -41,19 +53,40 @@ class DroneSystem implements Runnable{
         currentState = states.get("Not Ready");
     }
 
+    /**
+     * Sets the current state of the drone and executes its behavior.
+     *
+     * @param state The name of the state to transition to.
+     */
     public void setState(String state){
         this.currentState = states.get(state);
         currentState.handleStateChanged(this); // run the state
     }
 
+    /**
+     * Adds a new state to the drone's state map.
+     *
+     * @param state The name of the state.
+     * @param newState The state object to be added.
+     */
     public void addState(String state, DroneState newState){
         states.put(state, newState);
     }
 
+    /**
+     * Checks if the drone is available for assignment.
+     *
+     * @return True if the drone is available, false otherwise.
+     */
     public synchronized boolean isAvailable() {
         return currStatus == droneStatus.EMPTY;
     }
 
+    /**
+     * Assigns an event to the drone and updates its status.
+     *
+     * @param event The fire incident event to be assigned.
+     */
     public synchronized void assignEvent(Message event) {
         this.currentEvent = event;
         currStatus = droneStatus.FULL;
@@ -61,24 +94,38 @@ class DroneSystem implements Runnable{
         this.notifyAll();  // Wake up this drone to process the event
     }
 
+    /**
+     * Retrieves the unique ID of the drone.
+     *
+     * @return The drone's ID.
+     */
     public int getId(){
         return Id;
     }
 
+    /**
+     * Retrieves the currently assigned event.
+     *
+     * @return The event assigned to the drone.
+     */
     public synchronized Message getCurrentEvent() {
         return currentEvent;
     }
 
+    /**
+     * Receives the currently assigned event.
+     *
+     */
     public synchronized void receiveEvent() {
-        //if (!stuck && !empty){
-            while (currentEvent == null) {
-                try {
-                    wait();  // Wait until assigned an event
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+
+        while (currentEvent == null) {
+            try {
+                wait();  // Wait until assigned an event
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-        //}
+        }
+
 
         // Simulate event processing
         switch(currentEvent.getEventType().toUpperCase()){
@@ -93,7 +140,7 @@ class DroneSystem implements Runnable{
     }
 
     /**
-     *
+     * The main operational loop of the drone, handling event assignment and execution.
      */
     @Override
     public void run() {
@@ -135,6 +182,9 @@ class DroneSystem implements Runnable{
 
     }
 
+    /**
+     * Simulates the drone returning to its base after completing a task.
+     */
     public void returnToBase(){
         // simulate return flight time
         try {
@@ -144,7 +194,9 @@ class DroneSystem implements Runnable{
         }
     }
 
-
+    /**
+     * Refills the drone's water tank to full capacity.
+     */
     public void refillTank(){
         try {
             Thread.sleep(1000);  // Simulate processing time
@@ -154,11 +206,19 @@ class DroneSystem implements Runnable{
         agent_level_sensor = 100;
     }
 
+    /**
+     * Marks the drone as unavailable due to a crash.
+     *
+     * @return True if the drone is marked as crashed.
+     */
     public boolean makeUnavailable(){
         currStatus = droneStatus.CRASH;
         return true;
     }
 
+    /**
+     * Simulates the drone flying to the fire incident zone.
+     */
     public void fly(){
         try {
             Thread.sleep(1500);  // Simulate flight time
@@ -168,7 +228,9 @@ class DroneSystem implements Runnable{
 
     }
 
-
+    /**
+     * Simulates the drone extinguishing a fire by releasing water.
+     */
     public void pour(){
 
         // quench the fire
@@ -192,19 +254,38 @@ class DroneSystem implements Runnable{
 
     }
 
+    /**
+     * Retrieves the current water level in the drone's tank.
+     *
+     * @return The remaining water level.
+     */
     public int getWaterLevel(){
         return this.agent_level_sensor;
     }
 
-
+    /**
+     * Checks if the drone has arrived at the fire incident zone.
+     *
+     * @return True if the drone has arrived, false otherwise.
+     */
     public boolean getArrivalSensor(){
         return this.arrival_sensor;
     }
 
+    /**
+     * Checks if the nozzle is currently open.
+     *
+     * @return True if the nozzle is open, false otherwise.
+     */
     public boolean getNozzle(){
         return this.nozzle;
     }
 
+    /**
+     * Retrieves the total travel time spent flying to the incident location.
+     *
+     * @return The travel time in seconds.
+     */
     public int getTravel_seconds_spent(){
         return this.travel_seconds_spent;
     }

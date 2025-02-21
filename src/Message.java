@@ -1,3 +1,8 @@
+/**
+ * Represents a message or event related to a fire incident or a drone request.
+ * This class stores information such as the timestamp, zone ID, event type, and severity level.
+ * It is used to capture event data in response to fire-related incidents or drone-related events.
+ */
 public class Message {
     private int timestamp;
     private int zoneID;
@@ -14,7 +19,6 @@ public class Message {
      * @param eventType The type of event (FIRE_DETECTED or DRONE_REQUEST).
      * @param severity The severity level of the fire (Low, Moderate, High).
      */
-
     public Message(int timestamp,int zoneID, String eventType,String severity){
         this.timestamp = timestamp;
         this.zoneID = zoneID;
@@ -44,7 +48,7 @@ public class Message {
 
 
     /**
-     * gets the type of event FIRE_DETECTED or a DRONE_REQUEST.
+     * gets the type of event FIRE_DETECTED or a DRONE_REQUEST or a DRONE_CRASH.
      *
      * @return The event type as a String.
      */
@@ -52,11 +56,21 @@ public class Message {
         return eventType;
     }
 
+    /**
+     * gets the severity of the event
+     *
+     * @return The event type as a String.
+     */
     public String getSeverity() {
         return severity;
     }
 
 
+    /**
+     * Returns a string representation of the Event object.
+     *
+     * @return A formatted string containing the Event.
+     */
     @Override
     public String toString() {
         return "Event {" +
