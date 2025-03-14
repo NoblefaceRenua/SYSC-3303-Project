@@ -47,7 +47,7 @@ class DroneSystem implements Runnable{
     public DroneSystem(int id, int port){
         travel_seconds_spent = 0;
         stuck = false;
-        agent_level_sensor = 100; // the water level at the start in litres
+        agent_level_sensor = 20; // the water level at the start in litres
         this.Id = id;
         pour_time = 0;
         this.currStatus = droneStatus.EMPTY;

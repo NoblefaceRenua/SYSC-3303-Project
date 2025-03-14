@@ -28,13 +28,13 @@ public class Message {
 
         switch (severity){
             case "High":
-                fireLevel= 500;
+                fireLevel= 30;
                 break;
             case "Medium":
-                fireLevel = 300;
+                fireLevel = 20;
                 break;
             case "Low":
-                fireLevel = 200;
+                fireLevel = 10;
                 break;
         }
 
