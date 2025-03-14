@@ -9,6 +9,7 @@ public class Message {
     private String eventType;
 
     private String severity;
+    private int fireLevel;
 
 
     /**
@@ -24,6 +25,18 @@ public class Message {
         this.zoneID = zoneID;
         this.eventType = eventType;
         this.severity=severity;
+
+        switch (severity){
+            case "High":
+                fireLevel= 500;
+                break;
+            case "Medium":
+                fireLevel = 300;
+                break;
+            case "Low":
+                fireLevel = 200;
+                break;
+        }
 
     }
 
@@ -79,5 +92,19 @@ public class Message {
                 ", eventType='" + eventType + '\'' +
                 ", severity='" + severity + '\'' +
                 '}';
+    }
+
+    /**
+     * reduces the fire level by a certain amount
+     */
+    public void reduceFire() {
+    }
+
+
+    /**
+     * @return the level of the fire in this zone
+     */
+    public int getFireLevel() {
+        return 0;
     }
 }

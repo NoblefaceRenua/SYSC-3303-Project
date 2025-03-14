@@ -14,7 +14,7 @@ Drone State Files
 - OnSiteState: Drone state indicating that the drone has arrived at the fire incident zone
 - NotReadyState: Drone state indicating that the drone is not ready to be scheduled
 - FlyingState: Drone state indicating that the drone is flying to the fire incident zone
-- EmptyTankState: Drone state indicating that the drone's tank has been emptied
+- TankEmptyState: Drone state indicating that the drone has emptied the water in its tank
 
 Scheduler State Files
 - SchedulerState.java: Interface that defines methods for different scheduler states.

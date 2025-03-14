@@ -1,3 +1,7 @@
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -12,7 +16,7 @@ class DroneSystem implements Runnable{
     private boolean stuck;
     private int agent_level_sensor; // indicates the water level
     private boolean arrival_sensor; // indicates if the drone is above the fire incident zone
-    private int SPEED = 40; // the speed of the drone while flying over to the incident fire zone in m/s
+    // private int SPEED = 40; // the speed of the drone while flying over to the incident fire zone in m/s
     private int Id; // the ID of the drone
     private boolean nozzle;
     private boolean empty = false;
@@ -22,6 +26,10 @@ class DroneSystem implements Runnable{
     private Scheduler scheduler;
     private HashMap<String, DroneState> states;
     private DroneState currentState;
+    private DatagramSocket socket;
+    private DatagramPacket receivePacket;
+    private DatagramPacket sendPacket;
+    private String confirm_finish;
 
     /** ANSI color codes for console output formatting. */
     private static final String RESET = "\u001B[0m";
@@ -33,13 +41,13 @@ class DroneSystem implements Runnable{
     /**
      * Constructs a DroneSystem instance with an assigned ID and reference to the Scheduler.
      *
-     * @param scheduler The Scheduler responsible for assigning events to this drone.
      * @param id The unique identifier for the drone.
+     * @param port The port the drone listens on for new messages.
      */
-    public DroneSystem(Scheduler scheduler, int id){
+    public DroneSystem(int id, int port){
         travel_seconds_spent = 0;
         stuck = false;
-        agent_level_sensor = 100; // the water level at the start
+        agent_level_sensor = 100; // the water level at the start in litres
         this.Id = id;
         pour_time = 0;
         this.currStatus = droneStatus.EMPTY;
@@ -50,6 +58,14 @@ class DroneSystem implements Runnable{
         addState("Flying", new FlyingState());
         addState("On Site", new OnSiteState());
         addState("Stuck", new DroneStuckState());
+        addState("Empty tank", new TankEmptyState());
+
+        // initialize socket on port 6000
+        try {
+            socket = new DatagramSocket(port);
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
         currentState = states.get("Not Ready");
     }
 
@@ -61,6 +77,42 @@ class DroneSystem implements Runnable{
     public void setState(String state){
         this.currentState = states.get(state);
         currentState.handleStateChanged(this); // run the state
+    }
+
+    public void sendReceive(){
+        byte[] data = new byte[100];
+        receivePacket = new DatagramPacket(data, data.length);
+        try {
+            socket.receive(receivePacket);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        // this is to split up the info from the received message
+        String received = new String(receivePacket.getData());
+        received = received.substring(7, received.length() - 2);
+        String[] info = received.split(",");
+        for (String s : info) {
+            s = s.substring(s.indexOf("=") + 1, s.length() - 1);
+        }
+
+        // generate the currentEvent
+        currentEvent = new Message(Integer.parseInt(info[0]), Integer.parseInt(info[1]), info[2], info[3]);
+
+        // the drone should just run as usual without thinking of whether the zone has been cleared b
+        // but based on the severity the reply should be different depending on the amount of water it had
+        receiveEvent();
+
+        run();
+
+
+        byte[] reply = confirm_finish.getBytes();
+        sendPacket = new DatagramPacket(reply, reply.length, receivePacket.getAddress(), receivePacket.getPort());
+        try {
+            socket.send(sendPacket);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(confirm_finish + RESET);
     }
 
     /**
@@ -132,11 +184,16 @@ class DroneSystem implements Runnable{
             case "DRONE_CRASH":
                 System.out.println(RED + "[Drone " + getId() + "] " + "Processing event: " + currentEvent + RESET);
                 boolean result = makeUnavailable();
+                setConfirm_finish("[Drone " + getId() + "] " + "Status: Crashed");
                 break;
             default:
                 System.out.println(YELLOW + "[Drone " + getId() + "] " + "Processing event: " + currentEvent + RESET);
         }
 
+    }
+
+    public void setConfirm_finish(String confirm_finish){
+        this.confirm_finish = confirm_finish;
     }
 
     /**
@@ -244,14 +301,21 @@ class DroneSystem implements Runnable{
             pour_time++;
             agent_level_sensor--; // pour the water on the fires
 //            status = "Dousing flames....";
-            if (agent_level_sensor == 0){
+            currentEvent.reduceFire();
+            // if the fire is quenched then return to base for re-assignment
+            if (currentEvent.getFireLevel() == 0){
+                setConfirm_finish("[Drone " + getId() + "] " + "Status: Fire quenched, returning to base for refill");
+                break;
+            } // if tank is empty return to base for refill
+            else if (agent_level_sensor == 0){
+                setConfirm_finish("[Drone " + getId() + "] " + "Status: Tank empty, returning for refill");
                 empty = true;
             }
         }
         travel_seconds_spent = 0; // reset the seconds
         arrival_sensor = false;
         nozzle = false; // close the nozzle
-
+        setState("Empty tank");
     }
 
     /**
@@ -288,6 +352,26 @@ class DroneSystem implements Runnable{
      */
     public int getTravel_seconds_spent(){
         return this.travel_seconds_spent;
+    }
+
+    public static void main(String[] args) {
+        DroneSystem drone1 = new DroneSystem(1, 6000);
+        DroneSystem drone2 = new DroneSystem(2, 6100);
+        DroneSystem drone3 = new DroneSystem(3, 6200);
+        DroneSystem drone4 = new DroneSystem(4, 6300);
+        DroneSystem drone5 = new DroneSystem(5, 6400);
+
+        Thread d1 = new Thread(drone1);
+        Thread d2 = new Thread(drone2);
+        Thread d3 = new Thread(drone3);
+        Thread d4 = new Thread(drone4);
+        Thread d5 = new Thread(drone5);
+
+        d1.start();
+        d2.start();
+        d3.start();
+        d4.start();
+        d5.start();
     }
 
 }

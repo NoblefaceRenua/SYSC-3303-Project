@@ -2,7 +2,7 @@ public class Main {
     public static void main(String[] args) {
         Scheduler scheduler = new Scheduler();
 
-        DroneSystem drone1 = new DroneSystem(scheduler, 1);
+        DroneSystem drone1 = new DroneSystem(scheduler, 1, 6000);
         //DroneSystem drone2 = new DroneSystem(scheduler, 2);
         FireIncidentSubsystem fireIncident = new FireIncidentSubsystem(scheduler,"Sample_event_file.csv", "sample_zone_file.csv");
         scheduler.addDrone(drone1);
