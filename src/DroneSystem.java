@@ -66,7 +66,7 @@ class DroneSystem implements Runnable{
         } catch (SocketException e) {
             throw new RuntimeException(e);
         }
-        currentState = states.get("Not Ready");
+        setState("Not Ready");
     }
 
     /**
@@ -103,7 +103,6 @@ class DroneSystem implements Runnable{
         receiveEvent();
 
         run();
-
 
         byte[] reply = confirm_finish.getBytes();
         sendPacket = new DatagramPacket(reply, reply.length, receivePacket.getAddress(), receivePacket.getPort());
