@@ -12,7 +12,7 @@ class FireIncidentSubsystemTest {
     @BeforeEach
     void setUp() {
         scheduler = new Scheduler();
-        fireIncidentSubsystem = new FireIncidentSubsystem(scheduler, fireIncidentFilePath, zoneFilePath);
+        fireIncidentSubsystem = new FireIncidentSubsystem(fireIncidentFilePath, zoneFilePath);
 
         // Start fire and scheduler in separate threads
         new Thread(fireIncidentSubsystem).start();
