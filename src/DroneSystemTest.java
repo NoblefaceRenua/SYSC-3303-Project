@@ -13,7 +13,7 @@ public class DroneSystemTest {
     void setUp() {
         this.scheduler = new Scheduler();
         this.id = 5;
-        droneSystem = new DroneSystem(scheduler, id);
+        droneSystem = new DroneSystem(id, 5005);
 
         new Thread(droneSystem).start();
     }
@@ -37,6 +37,5 @@ public class DroneSystemTest {
 
         assertTrue(droneSystem.makeUnavailable());
     }
-
 
 }
