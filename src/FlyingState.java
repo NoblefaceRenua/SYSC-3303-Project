@@ -11,7 +11,7 @@ public class FlyingState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
-        System.out.println("Drone " + drone.getId() + ": Flying to incident zone");
+        System.out.println("[Drone " + drone.getId() + "]: Flying to incident zone");
         drone.fly();
     }
 
