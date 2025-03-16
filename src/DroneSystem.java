@@ -1,9 +1,6 @@
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
-import java.util.HashMap;
-import java.util.Random;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 
 /**
  * The DroneSystem class represents a drone in the firefighting system.
@@ -26,10 +23,14 @@ class DroneSystem implements Runnable{
     private Scheduler scheduler;
     private HashMap<String, DroneState> states;
     private DroneState currentState;
-    private DatagramSocket socket;
+    //private DatagramSocket socket;
+    private DatagramSocket receiveEventSocket, sendUpdateSocket;
     private DatagramPacket receivePacket;
     private DatagramPacket sendPacket;
     private String confirm_finish;
+    private int updatePort = 5001;
+    private int dronePort;
+    private Map<Integer, Zone> zoneMap = new HashMap<>();
 
     /** ANSI color codes for console output formatting. */
     private static final String RESET = "\u001B[0m";
@@ -51,7 +52,8 @@ class DroneSystem implements Runnable{
         this.Id = id;
         pour_time = 0;
         this.currStatus = droneStatus.EMPTY;
-        this.scheduler = scheduler;
+        this.dronePort = port;
+        //this.scheduler = scheduler;
         states = new HashMap<>();
         addState("Not Ready", new NotReadyState());
         addState("Ready", new DroneReadyState());
@@ -62,7 +64,8 @@ class DroneSystem implements Runnable{
 
         // initialize socket on port 6000
         try {
-            socket = new DatagramSocket(port);
+            receiveEventSocket = new DatagramSocket(port);
+            sendUpdateSocket = new DatagramSocket();
         } catch (SocketException e) {
             throw new RuntimeException(e);
         }
@@ -79,39 +82,91 @@ class DroneSystem implements Runnable{
         currentState.handleStateChanged(this); // run the state
     }
 
-    public void sendReceive(){
-        byte[] data = new byte[100];
-        receivePacket = new DatagramPacket(data, data.length);
+
+    /**
+     * Receives the currently assigned event.
+     *
+     */
+    public void receiveEvent() {
         try {
-            socket.receive(receivePacket);
+            byte[] buffer = new byte[1024];
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+            receiveEventSocket.receive(packet); // Blocking until an event arrives
+
+            // Deserialize the incoming Message object
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(packet.getData());
+                 ObjectInputStream ois = new ObjectInputStream(bis)) {
+
+                Message receivedEvent = (Message) ois.readObject();
+                currentEvent = receivedEvent;
+
+
+                switch(currentEvent.getEventType().toUpperCase()){
+                    case "DRONE_CRASH":
+                        System.out.println(RED + "[Drone " + getId() + "] " + "Received Event: " + currentEvent + RESET + "\n");
+                        currStatus = droneStatus.CRASH;;
+                        break;
+                    default:
+                        System.out.println(YELLOW + "[Drone " + getId() + "] " + "Received Event: " + currentEvent + RESET + "\n");
+                }
+
+            } catch (ClassNotFoundException e) {
+                System.err.println("[Drone] Error deserializing event: " + e.getMessage());
+            }
+
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("[Drone " +  getId() + "]" + "Error receiving event: " + e.getMessage());
         }
-        // this is to split up the info from the received message
-        String received = new String(receivePacket.getData());
-        received = received.substring(7, received.length() - 2);
-        String[] info = received.split(",");
-        for (String s : info) {
-            s = s.substring(s.indexOf("=") + 1, s.length() - 1);
+    }
+
+    public void sendUpdate(String updateMessage) {
+        try{
+            InetAddress schedulerAddress = InetAddress.getByName("localhost");
+
+            // Include drone ID in the message
+            String fullMessage = dronePort + ":" + updateMessage;
+
+            byte[] updateBytes = fullMessage.getBytes();
+
+            DatagramPacket updatePacket = new DatagramPacket(
+                    updateBytes,
+                    updateBytes.length,
+                    schedulerAddress,
+                    updatePort // Scheduler's drone update port
+            );
+
+            sendUpdateSocket.send(updatePacket);
+            System.out.println("[Drone " + getId() + "] " + "Sent update: " + updateMessage);
+
+        } catch (IOException e) {
+            System.err.println("[Drone] Failed to send update: " + e.getMessage());
         }
+    }
 
-        // generate the currentEvent
-        currentEvent = new Message(Integer.parseInt(info[0]), Integer.parseInt(info[1]), info[2], info[3]);
-
-        // the drone should just run as usual without thinking of whether the zone has been cleared b
-        // but based on the severity the reply should be different depending on the amount of water it had
-        receiveEvent();
-
-        run();
-
-        byte[] reply = confirm_finish.getBytes();
-        sendPacket = new DatagramPacket(reply, reply.length, receivePacket.getAddress(), receivePacket.getPort());
+    public void receiveZoneMap() {
         try {
-            socket.send(sendPacket);
+            byte[] buffer = new byte[4096];  // Increased buffer size for larger data
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+            receiveEventSocket.receive(packet);
+
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(packet.getData());
+                 ObjectInputStream ois = new ObjectInputStream(bis)) {
+
+                Map<Integer, Zone> receivedZoneMap = (Map<Integer, Zone>) ois.readObject();
+                System.out.println("[Drone " + Id + "] Received Zone Map: " + receivedZoneMap);
+
+                // Store the zone map locally for reference
+                this.zoneMap = receivedZoneMap;
+
+            } catch (ClassNotFoundException e) {
+                System.err.println("[Drone] Error deserializing zone map: " + e.getMessage());
+            }
+
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("[Drone] Error receiving zone map: " + e.getMessage());
         }
-        System.out.println(confirm_finish + RESET);
     }
 
     /**
@@ -163,33 +218,6 @@ class DroneSystem implements Runnable{
         return currentEvent;
     }
 
-    /**
-     * Receives the currently assigned event.
-     *
-     */
-    public synchronized void receiveEvent() {
-
-        while (currentEvent == null) {
-            try {
-                wait();  // Wait until assigned an event
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-
-        // Simulate event processing
-        switch(currentEvent.getEventType().toUpperCase()){
-            case "DRONE_CRASH":
-                System.out.println(RED + "[Drone " + getId() + "] " + "Processing event: " + currentEvent + RESET);
-                boolean result = makeUnavailable();
-                setConfirm_finish("[Drone " + getId() + "] " + "Status: Crashed");
-                break;
-            default:
-                System.out.println(YELLOW + "[Drone " + getId() + "] " + "Processing event: " + currentEvent + RESET);
-        }
-
-    }
 
     public void setConfirm_finish(String confirm_finish){
         this.confirm_finish = confirm_finish;
@@ -200,6 +228,8 @@ class DroneSystem implements Runnable{
      */
     @Override
     public void run() {
+        receiveZoneMap();
+
         while (true) {
 
             setState("Ready");
@@ -219,15 +249,14 @@ class DroneSystem implements Runnable{
                     currentEvent = null;
                     currStatus = droneStatus.EMPTY;
                     System.out.println(GREEN + "[Drone " + getId() + "] " + "Finished event, ready for new assignment." + RESET + "\n");
+                    sendUpdate("DRONE_FINISHED");
                 }
                 setState("Not Ready");
 
-                synchronized (scheduler) {
-                    scheduler.notifyAll();  // Notify scheduler that a drone is available
-                }
 
             } else {
-                System.out.println(RED + "[Drone " + getId() + "] " + "CRASHED, Cannot perform more task." + RESET);
+                System.out.println(RED + "[Drone " + getId() + "] " + "CRASHED, Cannot perform more task." + RESET + "\n");
+                sendUpdate("DRONE_CRASH");
                 setState("Stuck");
                 break;
             }
@@ -360,11 +389,11 @@ class DroneSystem implements Runnable{
         DroneSystem drone4 = new DroneSystem(4, 6300);
         DroneSystem drone5 = new DroneSystem(5, 6400);
 
-        Thread d1 = new Thread(drone1);
-        Thread d2 = new Thread(drone2);
-        Thread d3 = new Thread(drone3);
-        Thread d4 = new Thread(drone4);
-        Thread d5 = new Thread(drone5);
+        Thread d1 = new Thread(drone1, "Drone 1");
+        Thread d2 = new Thread(drone2, "Drone 2");
+        Thread d3 = new Thread(drone3, "Drone 3");
+        Thread d4 = new Thread(drone4, "Drone 4");
+        Thread d5 = new Thread(drone5, "Drone 5");
 
         d1.start();
         d2.start();
