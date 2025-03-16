@@ -11,12 +11,14 @@ public class WaitingState implements SchedulerState {
      */
     @Override
     public void addEvent(Scheduler scheduler, Message event) {
-        synchronized (scheduler) {
-            scheduler.getEventQueue().add(event);
-            System.out.println("[Scheduler] Added event in waiting state: " + event);
-            assignEventToDrone(scheduler);
-            scheduler.notifyAll(); // Wake up in case a drone becomes available
-        }
+        new Thread(() -> {
+            synchronized (scheduler) {
+                //scheduler.getEventQueue().add(event);
+                System.out.println("[Scheduler] Added event in waiting state: " + event + "\n");
+                assignEventToDrone(scheduler);
+                //scheduler.notifyAll(); // Wake up in case a drone becomes available
+            }
+        }).start();
     }
 
     /**
@@ -26,19 +28,23 @@ public class WaitingState implements SchedulerState {
      */
     @Override
     public void assignEventToDrone(Scheduler scheduler) {
-        synchronized (scheduler) {
-            while (scheduler.allDronesFull()) {
-                try {
-                    System.out.println("[Scheduler] No available drones. Remaining in Waiting state.");
-                    scheduler.wait(); // Wait for a drone to become available
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
+        new Thread(() -> {
+            synchronized (scheduler) {
+                if (scheduler.allDronesFull()) {
+                    System.out.println("[Scheduler] No available drones. Remaining in Waiting state." + "\n");
 
-            // Transition back to ProcessingState once a drone is available.
-            scheduler.setState(new ProcessingState());
-            scheduler.notifyAll(); // Notify that we're back in processing mode
-        }
+                    try {
+                        Thread.sleep(1000); // Brief pause before re-checking availability
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
+
+                // Transition back to ProcessingState once a drone is available.
+                System.out.println("[Scheduler] Drone available. Switching to ProcessingState." + "\n");
+                scheduler.setState(new ProcessingState());
+            }
+        }).start();
     }
 }
