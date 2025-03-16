@@ -1,4 +1,5 @@
 import java.io.*;
+import java.net.*;
 import java.util.*;
 
 /**
@@ -11,21 +12,27 @@ public class FireIncidentSubsystem implements Runnable {
     private final String file_Path; // File path containing fire incidents
     private final String zone_path; // File path containing zone information
     private Map<Integer, Zone> zoneMap = new HashMap<>();
-    private Scheduler scheduler;
     private int maxTime = 0; // maxTime is the maximum time for simulation
+    private DatagramSocket sendEventSocket;
 
     /**
      * Constructs the FireIncidentSubsystem.
      *
-     * @param scheduler The scheduler responsible for managing incidents and drones.
      * @param file_Path The path to the input file containing fire incidents.
      * @param zone_path The path to the input file containing zone information.
      */
-    public FireIncidentSubsystem(Scheduler scheduler, String file_Path, String zone_path) {
-        this.scheduler = scheduler;
+    public FireIncidentSubsystem(String file_Path, String zone_path) {
         this.file_Path = file_Path;
         this.zone_path = zone_path;
         this.eventMap = new HashMap<>();
+
+        try {
+            sendEventSocket = new DatagramSocket();
+
+        } catch (SocketException se) {
+            se.printStackTrace();
+            System.exit(1);
+        }
     }
 
 
@@ -36,10 +43,14 @@ public class FireIncidentSubsystem implements Runnable {
      */
     @Override
     public void run() {
+        List<Integer> dronePorts = List.of(6000, 6100, 6200, 6300, 6400);
+        sendZoneMap(getZones(), dronePorts);
+
         loadZones();
         loadFireIncidents();
 
         int count = 0;
+
         while (count <= maxTime) {
             // Simulate time passage by incrementing every 500ms
             try {
@@ -50,7 +61,23 @@ public class FireIncidentSubsystem implements Runnable {
                 if (eventMap.containsKey(count)) {
                     List<Message> events = eventMap.get(count);
                     for (Message event : events) {
-                        scheduler.addEvent(event);  // Send event to scheduler
+
+                        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+
+                            oos.writeObject(event);  // Serialize Message object
+                            oos.flush();             // Ensure everything is written to the stream
+
+                            byte[] msgBytes = bos.toByteArray();
+                            DatagramPacket sendPacket = new DatagramPacket(msgBytes, msgBytes.length, InetAddress.getLocalHost(), 5000);
+
+                            sendEventSocket.send(sendPacket);   // Send event to scheduler
+
+                            System.out.println("[FireIncidentSubsystem] Sent event: " + event + "\n");
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                     }
                 }
             } catch (InterruptedException e) {
@@ -59,6 +86,35 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
+
+    public void sendZoneMap(Map<Integer, Zone> zoneMap, List<Integer> dronePorts) {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            InetAddress droneAddress = InetAddress.getByName("localhost");
+
+            // Serialize the zone map
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(zoneMap);
+            oos.flush();
+            byte[] zoneMapData = bos.toByteArray();
+
+            // Send the zone map to all drones
+            for (int dronePort : dronePorts) {
+                DatagramPacket packet = new DatagramPacket(
+                        zoneMapData,
+                        zoneMapData.length,
+                        droneAddress,
+                        dronePort
+                );
+
+                socket.send(packet);
+                //System.out.println("[FireIncidentSubsystem] Sent zone map to Drone on port " + dronePort + "\n");
+            }
+
+        } catch (IOException e) {
+            System.err.println("[FireIncidentSubsystem] Error sending zone map: " + e.getMessage());
+        }
+    }
 
     /**
      * Reads and loads zone data from the specified CSV file.
@@ -167,4 +223,12 @@ public class FireIncidentSubsystem implements Runnable {
         return zoneMap;
     }
 
+    public static void main(String[] args) {
+        FireIncidentSubsystem fireIncident = new FireIncidentSubsystem("Sample_event_file.csv", "sample_zone_file.csv");
+
+        Thread fireIncidentThread = new Thread(fireIncident, "FireIncident");
+
+        fireIncidentThread.start();
+
+    }
 }
