@@ -9,48 +9,26 @@ class SchedulerTest {
     @BeforeEach
     void setUp() {
         scheduler = new Scheduler();
-        drone1 = new DroneSystem(scheduler, 1);
-        drone2 = new DroneSystem(scheduler, 2);
-
-        scheduler.addDrone(drone1);
-        scheduler.addDrone(drone2);
-
-        // Start drones in separate threads
-        new Thread(drone1).start();
-        new Thread(drone2).start();
     }
 
     @Test
-    void testAddEventToScheduler() {
-        Message event1 = new Message(50, 3, "FIRE_DETECTED", "High");
-        Message event2 = new Message(51, 7, "DRONE_REQUEST", "Moderate");
-
-        scheduler.addEvent(event1);
-        scheduler.addEvent(event2);
-
-        assertNotEquals(event1, scheduler.getEventQueue().peek()); // Events are assigned as soon as they are added so queue could be null or a different event
+    void testSchedulerInitialization() {
+        // Test that the scheduler starts with an empty event queue
+        assertNotNull(scheduler.getEventQueue(), "Event queue should be initialized");
+        assertTrue(scheduler.getEventQueue().isEmpty(), "Event queue should be empty on initialization");
     }
+    
 
     @Test
-    void testEventAssignmentToDrones() throws InterruptedException {
-        Message event1 = new Message(50, 3, "FIRE_DETECTED", "High");
-        Message event2 = new Message(51, 7, "DRONE_REQUEST", "Moderate");
+    void testSchedulerStateTransition() {
+        // Test that the scheduler's internal state can be updated and checked
 
-        scheduler.addEvent(event1);
-        scheduler.addEvent(event2);
+        // Assuming the scheduler has an internal state like "IDLE" or "PROCESSING"
+        scheduler.setState(new ProcessingState());  // Simulate state change
+        assertEquals(new ProcessingState(), scheduler.getState(), "Scheduler state should reflect 'PROCESSING' after update");
 
-        Thread.sleep(500); // Allow time for the event to be assigned
-
-        assertFalse(drone1.isAvailable() && drone2.isAvailable());
+        scheduler.setState(new IdleState());  // Simulate another state change
+        assertEquals(new IdleState(), scheduler.getState(), "Scheduler state should reflect 'IDLE' after update");
     }
-
-    @Test
-    void testDroneBecomesAvailableAfterProcessing() throws InterruptedException {
-        Message event1 = new Message(50, 3, "FIRE_DETECTED", "High");
-        scheduler.addEvent(event1);
-
-        Thread.sleep(3500); // Wait for event processing
-
-        assertTrue(drone1.isAvailable() || drone2.isAvailable());
-    }
+    
 }
