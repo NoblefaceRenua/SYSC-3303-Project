@@ -4,7 +4,7 @@ public class TankEmptyState implements DroneState{
      */
     @Override
     public void handleStateChanged(DroneSystem drone) {
-        System.out.println("Drone " + drone.getId() + ": Empty tank");
+        System.out.println("[Drone " + drone.getId() + "]: Empty tank");
         drone.returnToBase();
     }
 
